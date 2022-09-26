@@ -1,0 +1,60 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww16080\viewh18820\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 rule AddOrReplaceReadGroups:\
+	output: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned.sortedByCoord.out.bam\'92\
+	input: \'91/home/administrator/blok10/alignments/A549_0_2Aligned.sortedByCoord.out.bam\'92\
+	shell: \'91gatk AddOrReplaceReadGroups I=\{input\} O=\{output\} RGID=4 RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=20\'92\
+\
+rule SplitNCigarReads:\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 	output: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned-SNCR.sortedByCoord.out.bam\'92\
+	input: \
+		bam: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned.sortedByCoord.out.bam\'92\
+		fasta: \'91/home/administrator/blok10/alignments/Homo_sapiens.GRCh38.dna.chromosome.10.fa\'91\
+	shell: \'91gatk SplitNCigarReads -I \{input.bam\} -R \{input.fasta\} -O \{output\}\'92\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+rule BaseRecalibrator:\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 	output: \'91home/administrator/blok10/gatk_outputs/recalibrator_data_S2.table\'92\
+	input: \
+		bam: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned-SNCR.sortedByCoord.out.bam\'92\
+		fasta: \'91/home/administrator/blok10/alignments/Homo_sapiens.GRCh38.dna.chromosome.10.fa\'91\
+	shell: \'91gatk BaseRecalibrator -I \{input.bam\} -R \{input.fasta\} --known-sites all_variants/clinvar_chr.vcf -O \{output\}\'92\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+rule ApplyBQSR:\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 	output: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned-recalibrated.sortedByCoord.out.bam\'92\
+	input: \
+		bam: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned-SNCR.sortedByCoord.out.bam\'92\
+		fasta: \'91/home/administrator/blok10/alignments/Homo_sapiens.GRCh38.dna.chromosome.10.fa\'91\
+		table: \'91home/administrator/blok10/gatk_outputs/recalibrator_data_S2.table\'92\
+	shell: \'91gatk ApplyBQSR -I \{input.bam\} -R \{input.fasta\} -bqsr \{input.table\} -O \{output\}\'92\
+\
+rule HaplotypeCaller:\
+	output: \'91home/administrator/blok10/gatk_outputs/Haplo_S2.vcf.gz\'92\
+	input: \
+		fasta: \'91/home/administrator/blok10/alignments/Homo_sapiens.GRCh38.dna.chromosome.10.fa\'91\
+		recalibrated: \'91home/administrator/blok10/gatk_outputs/A549_0_2Aligned-recalibrated.sortedByCoord.out.bam\'92\
+	shell: \'91gatk --java-options "-Xmx4g" HaplotypeCaller -R \{input.fasta\} -I \{recalibrated\} -O \{output\} -ERC GVCF\'92\
+\
+rule GenotypeGVCFs:\
+	output: \'91home/administrator/blok10/gatk_outputs/final_output_genotypegvcfs_S2.vcf.gz\'92\
+	input:\
+		fasta: \'91/home/administrator/blok10/alignments/Homo_sapiens.GRCh38.dna.chromosome.10.fa\'91\
+		haplo: \'91home/administrator/blok10/gatk_outputs/Haplo_S2.vcf.gz\'92\
+	shell: \'91gatk GenotypeGVCFs -R \{input.fasta\} -V \{input.haplo\} -O \{output\}\'92\
+\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+\
+\
+\
+}
